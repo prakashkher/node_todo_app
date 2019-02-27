@@ -9,6 +9,6 @@ MongoClient.connect('mongodb://localhost:27017',(err,dbo)=>{
     });
 
     db.collection('Users').find(q).count().then((count)=>{
-        console.log('Count : ',count);
+        console.log('Count of documents: ',count);
     });
 });
