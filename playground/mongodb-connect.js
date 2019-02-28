@@ -8,8 +8,9 @@ MongoClient.connect('mongodb://localhost:27017',(err,dbo)=>{
     console.log('Connected to MongoDB');
 db = dbo.db('ToDoApp');
 
-db.collection('Users').insertOne({
-  name:'Name1',
+db.collection('users').insertOne({
+    _id:123,
+    name:'Name1',
   age:10,
   location:'location1' 
 },(err,res)=>{
