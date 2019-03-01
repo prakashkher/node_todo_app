@@ -64,3 +64,41 @@ describe('GET /todo/:id',()=>{
         
     });
 });
+
+describe('DELETE /todo/:id',()=>{
+    it('should delete the todo',(done)=>{
+        var id = '5c77b04bf338330be4b6a019';
+        request(app).delete(`/todo/${id}`).expect(200).end(done);
+    });
+
+    it('should return invalid id error',(done)=>{
+        var id = '124';
+        request(app).delete(`/todo/${id}`).expect(400).end(done);
+    });
+
+    it('should return not todo found error',(done)=>{
+        var id = '5c77b04bf338330be4b6a010';
+        request(app).delete(`/todo/${id}`).expect(404).end(done);
+    });
+});
+
+describe('PATCH /todo/:id',()=>{
+    it('should update Todo',(done)=>{
+        var todoReq={
+            text:"Task2 updated4",
+            completed : true
+        };
+        request(app).patch('/todo/5c78cee693adc941c46e6148')
+        .send({
+            text:"Task2 updated4",
+            completed : true
+        })
+        .expect(200)
+        .expect((res)=>{
+            expect(res.body.todo.text).toBe(todoReq.text);
+            expect(res.body.todo.completed).toBe(todoReq.completed);
+            expect(res.body.todo.completedAt).toBeA('number');
+        })
+        .end(done);
+    });
+});

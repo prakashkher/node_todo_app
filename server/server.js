@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const _ = require('lodash');
 
 var {ObjectID} = require('mongodb');
 
@@ -41,6 +42,50 @@ app.get('/get-todo/:id',(req,res)=>{
         res.send({todo});
     },(e)=>res.status(400).send(e));
 
+});
+
+app.delete('/todo/:id',(req,res)=>{
+    if(!ObjectID.isValid(req.params.id)){
+        return res.status(400).send();
+    }
+
+    ToDo.findByIdAndRemove(req.params.id).then((todo)=>{
+        if(!todo){
+            return res.status(404).send();
+        }
+        res.send({todo});
+    },(e)=>{
+        res.status(400).send(e);
+    });
+});
+
+app.patch('/todo/:id',(req,res)=>{
+    var id = req.params.id;
+    console.log(id);
+    console.log(req.body);
+    if(!ObjectID.isValid(id)){
+        console.log('Invalid Id');
+        return res.status(400).send();
+    }
+    var body = _.pick(req.body,['text','completed']);
+
+    if(_.isBoolean(body.completed) && body.completed){
+        body.completedAt = new Date().getTime();
+    }else{
+        body.completedAt = null;
+        body.completed = false;   
+    }
+
+    ToDo.findByIdAndUpdate(id,{$set:body},{new:true}).then((todo)=>{
+        if(!todo){
+            console.log('Todo not found');
+            return  res.status(404).send();
+        }
+        res.send({todo});
+    }).catch((e)=>{
+        console.log('Error:',e);
+        return res.status(400).send(e);
+    });
 });
 
 app.listen(port,()=>{
