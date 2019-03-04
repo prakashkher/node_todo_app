@@ -6,11 +6,7 @@ const {ToDo} = require('./../models/todo');
 
 describe('POST /save-todos',() => {
     it('should save todo',(done)=>{
-        var text ="Testing Task";
-        request(app).post('/save-todo').send({text}).expect(200).expect((res)=>{
-            expect(res.body.text).toBe(text);
-        })
-        .end((err,res)=>{
+        request(app).post('/save-todo').send({text:""}).expect(400).end((err,res)=>{
             if(err){
                 return done(err);
             }
@@ -19,7 +15,7 @@ describe('POST /save-todos',() => {
     });
 
     it('should return invalid data error',(done)=>{
-        request(app).post('/save-todo').send({text:""}).expect(400).end((err,res)=>{
+        request(app).post('/save-todo').send({text:"a"}).expect(200).end((err,res)=>{
             if(err){
                 return done(err);
             }
@@ -28,7 +24,7 @@ describe('POST /save-todos',() => {
     });
 });
 
-describe('GET get-todos',()=>{
+ describe('GET get-todos',()=>{
     it('should return all todos',(done)=>{
         request(app).get('/get-todos').expect(200).end(done);
     });
@@ -100,5 +96,22 @@ describe('PATCH /todo/:id',()=>{
             expect(res.body.todo.completedAt).toBeA('number');
         })
         .end(done);
+    });
+});
+
+describe('GET /users/me',()=>{
+    it('should return 401 error',(done)=>{
+        request(app).get('/users/me').set('x-auth','test').expect(401).expect((res)=>{
+            console.log('body:',res.body);
+            expect(res.body).toEqual({});
+        }).end(done);
+    });
+}); 
+
+describe('POST /user',()=>{
+    it('should return invalid email id error',(done)=>{
+        request(app).post('/user')
+            .send({"email":"anc","password":"asbcdef"})
+            .expect(400).end(done);
     });
 });

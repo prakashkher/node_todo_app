@@ -15,11 +15,10 @@ app.use(bodyParser.json());
 app.post('/save-todo',(req,res)=>{
     var todo = new ToDo({text:req.body.text});
     todo.save().then((doc)=>{
-        console.log('ToDo saved');
         res.send(doc);
     },(e)=>{
         
-        res.status(400).send(e);
+        res.status(400).send();
     });
 });
 
@@ -102,7 +101,7 @@ app.post('/user',(req,res)=>{
         res.header('x-auth',token).send(user);
     }).catch((e)=>{
         console.log(e);
-        res.send(e);
+        res.status(400).send(e);
     });
 });
 
