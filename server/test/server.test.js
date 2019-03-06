@@ -6,7 +6,7 @@ const {ToDo} = require('./../models/todo');
 
 describe('POST /save-todos',() => {
     it('should save todo',(done)=>{
-        request(app).post('/save-todo').send({text:""}).expect(400).end((err,res)=>{
+        request(app).post('/save-todo').send({text:"a"}).expect(200).end((err,res)=>{
             if(err){
                 return done(err);
             }
@@ -15,7 +15,7 @@ describe('POST /save-todos',() => {
     });
 
     it('should return invalid data error',(done)=>{
-        request(app).post('/save-todo').send({text:"a"}).expect(200).end((err,res)=>{
+        request(app).post('/save-todo').send({text:""}).expect(400).end((err,res)=>{
             if(err){
                 return done(err);
             }
@@ -113,5 +113,21 @@ describe('POST /user',()=>{
         request(app).post('/user')
             .send({"email":"anc","password":"asbcdef"})
             .expect(400).end(done);
+    });
+});
+
+describe('POST /login',()=>{
+    it('should return invalid credentials',(done)=>{
+        request(app).post('/login')
+            .send({"email":"anc","password":"asbcdef"})
+            .expect(400).end(done);
+    });
+});
+
+describe('DELETE /user/me/token',()=>{
+    it('should delete the token',(done)=>{
+        var token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1YzdjZWUwMGRiOWExODRlYzA4ZDU2OGYiLCJhY2Nlc3MiOiJhdXRoIiwiaWF0IjoxNTUxNzA1NjU4fQ.N0L1Rgx8uYU3MQ1afVovbQGrr1gLU9LcpMBcBG1ii8U';
+        request(app).delete('/user/me/token').set('x-auth',token)
+        .expect(200).end(done);
     });
 });

@@ -15,7 +15,8 @@ var ToDo = mongoose.model('ToDo',{
     completedAt : {
         type:Number,
         default : null
-    }
+    },
+    _creator : mongoose.Schema.Types.ObjectId
 });
 
 module.exports = {ToDo};

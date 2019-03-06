@@ -62,6 +62,18 @@ UserSchema.statics.findByToken = function (token){
     }
 };
 
+UserSchema.methods.removeToken = function(token){
+    var user = this;
+
+    return user.update({
+        $pull:{
+            tokens: {
+                token
+            }
+        }
+    });
+};
+
 UserSchema.pre('save', function(next){
     var user = this;
     if(user.isModified('password')){
@@ -87,6 +99,31 @@ UserSchema.pre('save', function(next){
         next();
     }
 } );
+
+UserSchema.statics.findByCredentials = function(email,password){
+    
+    return User.findOne({email}).then((user)=>{
+        
+        if(!user){
+            return Promise.reject();
+        }
+        
+        return new Promise((resolve,reject)=>{
+            
+            bcrypt.compare(password,user.password,function(err,res){
+                
+                if(!res){
+                    reject();
+                }
+                
+                resolve(user);
+            });
+        });
+    }).catch((e)=>{
+       
+        return Promise.reject();
+    });
+};
 
 UserSchema.methods.toJSON = function(){
     var userObject = this.toObject();

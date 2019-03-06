@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const _ = require('lodash');
-
+const bcrypt = require('bcryptjs');
 var {ObjectID} = require('mongodb');
 
 var mongoose = require('./db/mongoose');
@@ -12,30 +12,38 @@ const {authenticate} = require('./authenticate/authenticate');
 var port = process.env.PORT || 3000.
 var app = express();
 app.use(bodyParser.json());
-app.post('/save-todo',(req,res)=>{
-    var todo = new ToDo({text:req.body.text});
-    todo.save().then((doc)=>{
-        res.send(doc);
-    },(e)=>{
-        
-        res.status(400).send();
+app.post('/save-todo',authenticate,(req,res)=>{
+    var todo = new ToDo({
+        text:req.body.text,
+        _creator : req.user._id
+    });
+    return todo.save().then((doc)=>{
+        return res.send(doc);
+    }).catch((e)=>{
+        console.log(e);
+        return res.status(400).send();
     });
 });
 
-app.get('/get-todos',(req,res)=>{
-    ToDo.find().then((todos)=>{
+app.get('/get-todos',authenticate,(req,res)=>{
+    ToDo.find({
+        _creator : req.user._id
+    }).then((todos)=>{
         res.send({todos});
     },(e)=>{
         res.status(400).send(e);
     });
 });
 
-app.get('/get-todo/:id',(req,res)=>{
+app.get('/get-todo/:id',authenticate,(req,res)=>{
     if(!ObjectID.isValid(req.params.id)){
         return res.status(400).send({msg:'Todo Id is invalid'});
     }
     
-    ToDo.findById(req.params.id).then((todo)=>{
+    ToDo.findOne({
+        _id:req.params.id,
+        _creator:req.user._id
+    }).then((todo)=>{
         if(!todo){
             return res.status(404).send({msg:'Todo not found'});
         }
@@ -44,12 +52,15 @@ app.get('/get-todo/:id',(req,res)=>{
 
 });
 
-app.delete('/todo/:id',(req,res)=>{
+app.delete('/todo/:id',authenticate,(req,res)=>{
     if(!ObjectID.isValid(req.params.id)){
         return res.status(400).send();
     }
 
-    ToDo.findByIdAndRemove(req.params.id).then((todo)=>{
+    ToDo.findOneAndRemove({
+        _id:req.params.id,
+        _creator:req.user._id
+    }).then((todo)=>{
         if(!todo){
             return res.status(404).send();
         }
@@ -59,10 +70,9 @@ app.delete('/todo/:id',(req,res)=>{
     });
 });
 
-app.patch('/todo/:id',(req,res)=>{
+app.patch('/todo/:id',authenticate,(req,res)=>{
     var id = req.params.id;
-    console.log(id);
-    console.log(req.body);
+    
     if(!ObjectID.isValid(id)){
         console.log('Invalid Id');
         return res.status(400).send();
@@ -76,7 +86,10 @@ app.patch('/todo/:id',(req,res)=>{
         body.completed = false;   
     }
 
-    ToDo.findByIdAndUpdate(id,{$set:body},{new:true}).then((todo)=>{
+    ToDo.findOneAndUpdate({
+        _id:id,
+        _creator:req.user._id
+    },{$set:body},{new:true}).then((todo)=>{
         if(!todo){
             console.log('Todo not found');
             return  res.status(404).send();
@@ -107,6 +120,28 @@ app.post('/user',(req,res)=>{
 
 app.get('/users/me',authenticate,(req,res)=>{
     res.send(req.user);
+});
+
+app.post('/login',(req,res)=>{
+    
+    User.findByCredentials(req.body.email,req.body.password).then((user)=>{
+        user.generateAuthToken().then((token)=>{
+            res.header('x-auth',token).send(user);
+        });
+    }).catch((e)=>{
+        res.status(400).send();
+    });
+
+    
+});
+
+
+app.delete('/user/me/token',authenticate,(req,res)=>{
+    req.user.removeToken(req.token).then(()=>{
+        res.send();
+    },(e)=>{
+        res.status(401).send();
+    });
 });
 
 app.listen(port,()=>{
